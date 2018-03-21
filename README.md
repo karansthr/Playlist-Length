@@ -4,7 +4,7 @@ playlist-len
 
 hip up your terminal and type following command
 
-```pip install -e git+https://github.com/karansthr/playlist-length```
+```pip install -e git+https://github.com/karansthr/playlist-length#egg=playlist=length```
 
 then use following command to get length of all the videos in a directory 
 
