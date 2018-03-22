@@ -1,4 +1,13 @@
+import os
 from distutils.core import setup
+from setuptools.command.install import install
+
+
+class CustomInstallCommand(install):
+    def run(self):
+        os.system('sudo apt-get install ffmpeg')
+        install.run(self)
+
 
 setup(
     name='playlist-length',
@@ -11,8 +20,9 @@ setup(
     packages=['playlist_length'],
     install_requires=["python-magic"],
     license='MIT License',
+    cmdclass={'install': CustomInstallCommand},
     keywords='videolenght playlist-length',
     entry_points={
         'console_scripts': ['playlistlen=playlist_length:main'],
     }
-    )
+)
