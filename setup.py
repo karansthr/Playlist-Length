@@ -1,5 +1,6 @@
 from distutils.core import setup
 
+
 setup(
     name='playlist-length',
     version='1.0',
@@ -15,4 +16,4 @@ setup(
     entry_points={
         'console_scripts': ['playlistlen=playlist_length:main'],
     }
-    )
+)
