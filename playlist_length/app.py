@@ -1,6 +1,6 @@
+import argparse
 import json
 import os
-import sys
 import subprocess as sp
 from concurrent.futures import ProcessPoolExecutor
 
@@ -46,19 +46,20 @@ def duration(vid_file_path):
 
 
 def video_file(file_path):
-    if (
-        os.path.isfile(file_path) and
-        magic.from_file(file_path, mime=True).split('/')[0].lower() == "video"
-    ):
+    if (os.path.isfile(file_path) and magic.from_file(
+            file_path, mime=True).split('/')[0].lower() == "video"):
         return True
     return False
 
 
 def main():
-    if len(sys.argv) == 1:
-        print("Please give path to a directory")
-        exit()
-    BASE_PATH = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "path",
+        help="Output the total duration of all the videos in given directory",
+        type=str)
+    args = parser.parse_args()
+    BASE_PATH = args.path
     if not os.path.isdir(BASE_PATH):
         print(
             "Give the directory path as argument or use . for currect directory"
@@ -66,16 +67,19 @@ def main():
         exit()
     all_files = os.listdir(BASE_PATH)
     with ProcessPoolExecutor() as executor:
-        result = executor.map(
-            duration, map(lambda x: os.path.join(BASE_PATH, x), all_files)
-        )
-    length = sum(result) + 1
-    if length < 60:
+        result = executor.map(duration,
+                              map(lambda x: os.path.join(BASE_PATH, x),
+                                  all_files))
+    length = __import__('math').ceil(sum(result))
+    if length == 0:
+        print('No videos found!')
+    elif length < 60:
         length = '{} minutes.'.format(int(length))
     else:
         hours, minutes = divmod(length, 60)
         length = '{} hours and {} minutes.'.format(int(hours), int(minutes))
-    print('Length of all vidoes is {}'.format(length))
+    if length:
+        print('Length of all vidoes is {}'.format(length))
 
 
 if __name__ == '__main__':

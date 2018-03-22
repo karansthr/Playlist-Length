@@ -10,7 +10,3 @@
 * Add description of your changes
 * Ensure tests are passing
 * Ensure branch is mergeable
-
-## Testing
-
-* Please make sure tests pass with `./script/test`
