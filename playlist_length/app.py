@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import subprocess as sp
+from concurrent.futures import ProcessPoolExecutor
 
 import magic
 
@@ -28,41 +29,53 @@ def probe(vid_file_path):
 def duration(vid_file_path):
     ''' Video's duration in seconds, return a float number
     '''
-    _json = probe(vid_file_path)
+    if video_file(vid_file_path):
+        _json = probe(vid_file_path)
 
-    if 'format' in _json:
-        if 'duration' in _json['format']:
-            return float(_json['format']['duration'])
+        if 'format' in _json:
+            if 'duration' in _json['format']:
+                return float(_json['format']['duration']) / 60
 
-    if 'streams' in _json:
-        # commonly stream 0 is the video
-        for s in _json['streams']:
-            if 'duration' in s:
-                return float(s['duration'])
+        if 'streams' in _json:
+            # commonly stream 0 is the video
+            for s in _json['streams']:
+                if 'duration' in s:
+                    return float(s['duration']) / 60
+    # Maybe the file is not a valid video file
+    return 0
 
-    # if everything didn't happen,
-    # we got here because no single 'return' in the above happen.
-    raise Exception('I found no duration')
-    # return None
+
+def video_file(file_path):
+    if (
+        os.path.isfile(file_path) and
+        magic.from_file(file_path, mime=True).split('/')[0].lower() == "video"
+    ):
+        return True
+    return False
 
 
 def main():
     if len(sys.argv) == 1:
-        print("please give path to a directory")
+        print("Please give path to a directory")
         exit()
-    directory = sys.argv[1]
-    if not os.path.isdir(directory):
+    BASE_PATH = sys.argv[1]
+    if not os.path.isdir(BASE_PATH):
         print(
-            "give the directory path as an argument, use . for currect directory"
+            "Give the directory path as argument or use . for currect directory"
         )
         exit()
-    item_list = os.listdir(directory)
-    total_length_in_minute = 0
-    for i in item_list:
-        if os.path.isfile(i) and magic.from_file(
-                i, mime=True).split('/')[0].lower() == "video":
-            total_length_in_minute += duration(i) / 60
-    print("Lenght of all vidoes in minutes :", int(1 + total_length_in_minute))
+    all_files = os.listdir(BASE_PATH)
+    with ProcessPoolExecutor() as executor:
+        result = executor.map(
+            duration, map(lambda x: os.path.join(BASE_PATH, x), all_files)
+        )
+    length = sum(result) + 1
+    if length < 60:
+        length = '{} minutes.'.format(int(length))
+    else:
+        hours, minutes = divmod(length, 60)
+        length = '{} hours and {} minutes.'.format(int(hours), int(minutes))
+    print('Length of all vidoes is {}'.format(length))
 
 
 if __name__ == '__main__':
