@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import subprocess as sp
+import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import huepy
@@ -60,10 +61,11 @@ def main():
     parser = argparse.ArgumentParser(
         description='''
         Output the total duration of all the videos in given directory.
-        '''
+        ''',
+        usage='playlist-lentgh [-h] [-p/--path PATH]'
     )
     parser.add_argument(
-        '--path',
+        '-p', '--path',
         help='Path to a directory. Defaults to current directory',
         type=str,
         default='.',
@@ -73,10 +75,13 @@ def main():
 
     if not os.path.isdir(BASE_PATH):
         print(
-            'Give the path to directory as an argument '
-            'or nothing for current directory.'
+            huepy.bold(
+                huepy.red(
+                    '\nError: This doesn\'t seem to be a valid directory.\n'
+                )
+            )
         )
-        exit()
+        sys.exit()
     all_files = [
         os.path.join(root, file)
         for root, _, files in os.walk(BASE_PATH)
@@ -84,14 +89,14 @@ def main():
     ]
     print()
     with ProcessPoolExecutor() as executor:
-        result = list(
-            tqdm(
-                executor.map(duration, all_files),
-                total=len(all_files),
-                ascii=True,
-                desc='Please Wait',
+            result = list(
+                tqdm(
+                    executor.map(duration, all_files),
+                    total=len(all_files),
+                    ascii=True,
+                    desc='Please Wait',
+                )
             )
-        )
     length = round(sum(result))
     if not length:
         return huepy.bold(
