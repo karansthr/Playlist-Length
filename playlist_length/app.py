@@ -1,9 +1,10 @@
+import argparse
 import json
 import os
-import sys
 import subprocess as sp
 from concurrent.futures import ProcessPoolExecutor
 
+import huepy
 import magic
 
 
@@ -13,12 +14,17 @@ def probe(vid_file_path):
     @vid_file_path : The absolute (full) path of the video file, string.
     '''
     if type(vid_file_path) != str:
-        raise Exception('Gvie ffprobe a full file path of the video')
-        return
+        raise Exception('Give ffprobe a full file path of the video')
 
     command = [
-        "ffprobe", "-loglevel", "quiet", "-print_format", "json",
-        "-show_format", "-show_streams", vid_file_path
+        'ffprobe',
+        '-loglevel',
+        'quiet',
+        '-print_format',
+        'json',
+        '-show_format',
+        '-show_streams',
+        vid_file_path,
     ]
 
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
@@ -29,7 +35,7 @@ def probe(vid_file_path):
 def duration(vid_file_path):
     ''' Video's duration in seconds, return a float number
     '''
-    if video_file(vid_file_path):
+    if is_video_file(vid_file_path):
         _json = probe(vid_file_path)
 
         if 'format' in _json:
@@ -41,42 +47,59 @@ def duration(vid_file_path):
             for s in _json['streams']:
                 if 'duration' in s:
                     return float(s['duration']) / 60
+
     # Maybe the file is not a valid video file
     return 0
 
 
-def video_file(file_path):
+def is_video_file(file_path):
     if (
-        os.path.isfile(file_path) and
-        magic.from_file(file_path, mime=True).split('/')[0].lower() == "video"
+        magic.from_file(file_path, mime=True).split('/')[0].lower() == 'video'
     ):
         return True
     return False
 
 
 def main():
-    if len(sys.argv) == 1:
-        print("Please give path to a directory")
-        exit()
-    BASE_PATH = sys.argv[1]
+    parser = argparse.ArgumentParser(
+        description='''
+        Output the total duration of all the videos in given directory
+        '''
+    )
+    parser.add_argument(
+        '--path',
+        help='Path to a directory. Defaults to current directory',
+        type=str,
+        default='.',
+    )
+    args = parser.parse_args()
+    BASE_PATH = args.path
     if not os.path.isdir(BASE_PATH):
-        print(
-            "Give the directory path as argument or use . for currect directory"
-        )
+        print('Give the path to directory as an argument '\
+              'or nothing for current directory.')
         exit()
-    all_files = os.listdir(BASE_PATH)
+    all_files = (
+        os.path.join(root, file)
+        for root, _, files in os.walk(BASE_PATH)
+        for file in files
+    )
     with ProcessPoolExecutor() as executor:
-        result = executor.map(
-            duration, map(lambda x: os.path.join(BASE_PATH, x), all_files)
+        result = executor.map(duration, all_files)
+    length = sum(result)
+    if not length:
+        return huepy.bold(
+            huepy.red('Seems like there is no video  ¯\_(ツ)_/¯')
         )
-    length = sum(result) + 1
     if length < 60:
-        length = '{} minutes.'.format(int(length))
+        message = 'Length of all vidoes is {} minutes.'.format(round(length))
     else:
         hours, minutes = divmod(length, 60)
-        length = '{} hours and {} minutes.'.format(int(hours), int(minutes))
-    print('Length of all vidoes is {}'.format(length))
+        message = 'Length of all vidoes is {} hours and {} minutes.'.format(
+            int(hours), round(minutes)
+        )
+    message = huepy.bold(huepy.green(message))
+    return message
 
 
 if __name__ == '__main__':
-    main()
+    print(main())
