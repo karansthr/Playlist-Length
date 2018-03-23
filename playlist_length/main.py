@@ -28,26 +28,28 @@ def probe(vid_file_path):
     ]
 
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
-    out, err = pipe.communicate()
-    return json.loads(out)
+    out, error = pipe.communicate()
+    if not error:
+        return json.loads(out)
 
 
 def duration(vid_file_path):
     ''' Video's duration in seconds, return a float number.'''
-    if is_video_file(vid_file_path):
-        _json = probe(vid_file_path)
-
-        if 'format' in _json:
-            if 'duration' in _json['format']:
-                return float(_json['format']['duration']) / 60
-
-        if 'streams' in _json:
-            # commonly stream 0 is the video
-            for s in _json['streams']:
-                if 'duration' in s:
-                    return float(s['duration']) / 60
-    # Maybe the file is not a valid video file
-    return 0
+    if not is_video_file(vid_file_path):
+        return 0
+    _json = probe(vid_file_path)
+    if not _json:
+        length = 0
+    elif 'format' in _json:
+        if 'duration' in _json['format']:
+            length = float(_json['format']['duration']) / 60
+    elif 'streams' in _json:
+        # commonly stream 0 is the video
+        for s in _json['streams']:
+            if 'duration' in s:
+                length = float(s['duration']) / 60
+                break
+    return length
 
 
 def is_video_file(file_path):
