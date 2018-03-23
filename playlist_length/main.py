@@ -9,12 +9,11 @@ import magic
 
 
 def probe(vid_file_path):
-    ''' Give a json from ffprobe command line
+    '''
+    Give a json from ffprobe command line.
 
     @vid_file_path : The absolute (full) path of the video file, string.
     '''
-    if type(vid_file_path) != str:
-        raise Exception('Give ffprobe a full file path of the video')
 
     command = [
         'ffprobe',
@@ -33,8 +32,7 @@ def probe(vid_file_path):
 
 
 def duration(vid_file_path):
-    ''' Video's duration in seconds, return a float number
-    '''
+    ''' Video's duration in seconds, return a float number.'''
     if is_video_file(vid_file_path):
         _json = probe(vid_file_path)
 
@@ -47,23 +45,18 @@ def duration(vid_file_path):
             for s in _json['streams']:
                 if 'duration' in s:
                     return float(s['duration']) / 60
-
     # Maybe the file is not a valid video file
     return 0
 
 
 def is_video_file(file_path):
-    if (
-        magic.from_file(file_path, mime=True).split('/')[0].lower() == 'video'
-    ):
-        return True
-    return False
+    return 'video' in magic.from_file(file_path, mime=True).lower()
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='''
-        Output the total duration of all the videos in given directory
+        Output the total duration of all the videos in given directory.
         '''
     )
     parser.add_argument(
@@ -74,6 +67,7 @@ def main():
     )
     args = parser.parse_args()
     BASE_PATH = args.path
+
     if not os.path.isdir(BASE_PATH):
         print('Give the path to directory as an argument '\
               'or nothing for current directory.')
@@ -85,17 +79,17 @@ def main():
     )
     with ProcessPoolExecutor() as executor:
         result = executor.map(duration, all_files)
-    length = sum(result)
+    length = round(sum(result))
     if not length:
         return huepy.bold(
             huepy.red('Seems like there is no video  ¯\_(ツ)_/¯')
         )
     if length < 60:
-        message = 'Length of all vidoes is {} minutes.'.format(round(length))
+        message = 'Length of all vidoes is {} minutes.'.format(length)
     else:
         hours, minutes = divmod(length, 60)
         message = 'Length of all vidoes is {} hours and {} minutes.'.format(
-            int(hours), round(minutes)
+            hours, minutes
         )
     message = huepy.bold(huepy.green(message))
     return message
