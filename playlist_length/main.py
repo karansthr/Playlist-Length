@@ -4,8 +4,8 @@ import os
 import subprocess as sp
 from concurrent.futures import ProcessPoolExecutor
 
-import huepy
 import magic
+from huepy import bold, green, red
 from tqdm import tqdm
 
 
@@ -55,21 +55,21 @@ def is_video_file(file_path):
         return file_path
 
 
+def get_files(BASE_PATH):
+    for file in os.listdir(BASE_PATH):
+        file_path = os.path.join(BASE_PATH, file)
+        if os.path.isfile(file_path):
+            yield file_path
+
+
 def main(BASE_PATH, no_subdir):
     if not os.path.isdir(BASE_PATH):
         return(
-            huepy.bold(
-                huepy.red(
-                    '\nError: This doesn\'t seem to be a valid directory.\n'
-                )
-            )
+            bold(red('\nError: This doesn\'t seem to be a valid directory.\n'))
         )
 
     if no_subdir:
-        all_files = (
-            os.path.join(BASE_PATH, file) for file in os.listdir(BASE_PATH)
-            if os.path.isfile(os.path.join(BASE_PATH, file))
-        )
+        all_files = get_files(BASE_PATH)
     else:
         all_files = (
             os.path.join(root, file)
@@ -83,9 +83,7 @@ def main(BASE_PATH, no_subdir):
         )
 
     if not video_files:
-        return huepy.bold(
-            huepy.red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n')
-        )
+        return bold(red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n'))
 
     with ProcessPoolExecutor() as executor:
         print()
@@ -107,7 +105,7 @@ def main(BASE_PATH, no_subdir):
         message = 'Length of all vidoes is {} hours and {} minutes.'.format(
             hours, minutes
         )
-    message = huepy.bold(huepy.green(message))
+    message = bold(green(message))
     return f'\n{message}\n'
 
 
