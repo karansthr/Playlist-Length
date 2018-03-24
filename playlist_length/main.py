@@ -40,14 +40,14 @@ def duration(vid_file_path):
         length = 0
     elif 'format' in _json:
         if 'duration' in _json['format']:
-            length = float(_json['format']['duration']) / 60
+            length = float(_json['format']['duration'])
     elif 'streams' in _json:
         # commonly stream 0 is the video
         for s in _json['streams']:
             if 'duration' in s:
-                length = float(s['duration']) / 60
+                length = float(s['duration'])
                 break
-    return length
+    return length / 60
 
 
 def is_video_file(file_path):
@@ -91,6 +91,7 @@ def main(BASE_PATH):
                 desc='Please Wait',
             )
         )
+
     length = round(sum(result))
 
     if length < 60:
