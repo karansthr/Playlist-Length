@@ -55,7 +55,7 @@ def is_video_file(file_path):
         return file_path
 
 
-def main(BASE_PATH):
+def main(BASE_PATH, no_subdir):
     if not os.path.isdir(BASE_PATH):
         return(
             huepy.bold(
@@ -65,11 +65,17 @@ def main(BASE_PATH):
             )
         )
 
-    all_files = (
-        os.path.join(root, file)
-        for root, _, files in os.walk(BASE_PATH)
-        for file in files
-    )
+    if no_subdir:
+        all_files = (
+            os.path.join(BASE_PATH, file) for file in os.listdir(BASE_PATH)
+            if os.path.isfile(os.path.join(BASE_PATH, file))
+        )
+    else:
+        all_files = (
+            os.path.join(root, file)
+            for root, _, files in os.walk(BASE_PATH)
+            for file in files
+        )
 
     with ProcessPoolExecutor() as executor:
         video_files = list(
@@ -109,8 +115,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='''
         Output the total duration of all the videos in given directory.
-        ''',
-        usage='playlist-lentgh [-h] [-p/--path PATH]'
+        '''
     )
     parser.add_argument(
         '-p', '--path',
@@ -118,7 +123,10 @@ if __name__ == '__main__':
         type=str,
         default='.',
     )
-
+    parser.add_argument(
+        '--no-subdir',
+        help='Don\'t look for videos in sub directories.',
+        action='store_true',
+    )
     args = parser.parse_args()
-    BASE_PATH = args.path
-    print(main(BASE_PATH))
+    print(main(args.path, args.no_subdir))
