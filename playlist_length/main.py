@@ -54,7 +54,8 @@ def duration(vid_file_path):
 
 
 def is_video_file(file_path):
-    return 'video' in magic.from_file(file_path, mime=True).lower()
+    if 'video' in magic.from_file(file_path, mime=True).lower():
+        return file_path
 
 
 def main():
@@ -82,26 +83,32 @@ def main():
             )
         )
         sys.exit()
-    all_files = [
+    all_files = (
         os.path.join(root, file)
         for root, _, files in os.walk(BASE_PATH)
         for file in files
-    ]
-    print()
+    )
+
+    with ProcessPoolExecutor() as executor:
+        video_files = list(
+            filter(None, executor.map(is_video_file, all_files))
+        )
+
+    if not video_files:
+        return huepy.bold(
+            huepy.red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n')
+        )
+
     with ProcessPoolExecutor() as executor:
             result = list(
                 tqdm(
-                    executor.map(duration, all_files),
-                    total=len(all_files),
+                    executor.map(duration, video_files),
+                    total=len(video_files),
                     ascii=True,
                     desc='Please Wait',
                 )
             )
     length = round(sum(result))
-    if not length:
-        return huepy.bold(
-            huepy.red('\nSeems like there is no video  ¯\_(ツ)_/¯\n')
-        )
 
     if length < 60:
         message = 'Length of all vidoes is {} minutes.'.format(length)
