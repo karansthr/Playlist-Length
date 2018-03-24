@@ -36,8 +36,6 @@ def probe(vid_file_path):
 
 def duration(vid_file_path):
     ''' Video's duration in seconds, return a float number.'''
-    if not is_video_file(vid_file_path):
-        return 0
     _json = probe(vid_file_path)
     if not _json:
         length = 0
@@ -58,22 +56,7 @@ def is_video_file(file_path):
         return file_path
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='''
-        Output the total duration of all the videos in given directory.
-        ''',
-        usage='playlist-lentgh [-h] [-p/--path PATH]'
-    )
-    parser.add_argument(
-        '-p', '--path',
-        help='Path to a directory. Defaults to current directory',
-        type=str,
-        default='.',
-    )
-    args = parser.parse_args()
-    BASE_PATH = args.path
-
+def main(BASE_PATH):
     if not os.path.isdir(BASE_PATH):
         print(
             huepy.bold(
@@ -83,6 +66,7 @@ def main():
             )
         )
         sys.exit()
+
     all_files = (
         os.path.join(root, file)
         for root, _, files in os.walk(BASE_PATH)
@@ -100,14 +84,15 @@ def main():
         )
 
     with ProcessPoolExecutor() as executor:
-            result = list(
-                tqdm(
-                    executor.map(duration, video_files),
-                    total=len(video_files),
-                    ascii=True,
-                    desc='Please Wait',
-                )
+        print()
+        result = list(
+            tqdm(
+                executor.map(duration, video_files),
+                total=len(video_files),
+                ascii=True,
+                desc='Please Wait',
             )
+        )
     length = round(sum(result))
 
     if length < 60:
@@ -122,4 +107,19 @@ def main():
 
 
 if __name__ == '__main__':
-    print(main())
+    parser = argparse.ArgumentParser(
+        description='''
+        Output the total duration of all the videos in given directory.
+        ''',
+        usage='playlist-lentgh [-h] [-p/--path PATH]'
+    )
+    parser.add_argument(
+        '-p', '--path',
+        help='Path to a directory. Defaults to current directory',
+        type=str,
+        default='.',
+    )
+
+    args = parser.parse_args()
+    BASE_PATH = args.path
+    print(main(BASE_PATH))
