@@ -2,7 +2,6 @@ import argparse
 import json
 import os
 import subprocess as sp
-import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import huepy
@@ -58,14 +57,13 @@ def is_video_file(file_path):
 
 def main(BASE_PATH):
     if not os.path.isdir(BASE_PATH):
-        print(
+        return(
             huepy.bold(
                 huepy.red(
                     '\nError: This doesn\'t seem to be a valid directory.\n'
                 )
             )
         )
-        sys.exit()
 
     all_files = (
         os.path.join(root, file)
