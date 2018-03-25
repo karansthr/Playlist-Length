@@ -63,7 +63,7 @@ def get_files(BASE_PATH):
             yield file_path
 
 
-def main(BASE_PATH, no_subdir):
+def app(BASE_PATH, no_subdir):
     if not os.path.isdir(BASE_PATH):
         return(
             bold(red('\nError: This doesn\'t seem to be a valid directory.\n'))
@@ -106,10 +106,10 @@ def main(BASE_PATH, no_subdir):
             hours, minutes
         )
     message = bold(green(message))
-    return f'\n{message}\n'
+    return '\n{}\n'.format(message)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='''
         Output the total duration of all the videos in given directory.
@@ -127,4 +127,7 @@ if __name__ == '__main__':
         action='store_true',
     )
     args = parser.parse_args()
-    print(main(args.path, args.no_subdir))
+    print(app(args.path, args.no_subdir))
+
+if __name__ == '__main__':
+    main()
