@@ -51,7 +51,8 @@ def duration(vid_file_path):
 
 
 def is_video_file(file_path):
-    if 'video' in magic.from_file(file_path, mime=True).lower():
+    if not os.path.islink(file_path) and 'video' in magic.from_file(
+            file_path, mime=True).lower():
         return file_path
 
 
@@ -71,16 +72,15 @@ def main(BASE_PATH, no_subdir):
     if no_subdir:
         all_files = get_files(BASE_PATH)
     else:
-        all_files = (
+        all_files = [
             os.path.join(root, file)
             for root, _, files in os.walk(BASE_PATH)
             for file in files
-        )
+        ]
 
-    with ProcessPoolExecutor() as executor:
-        video_files = list(
-            filter(None, executor.map(is_video_file, all_files))
-        )
+    video_files = list(
+        filter(is_video_file,
+               tqdm(all_files, total=len(all_files), desc="Collecting vidoes")))
 
     if not video_files:
         return bold(red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n'))
