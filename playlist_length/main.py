@@ -3,7 +3,6 @@ import json
 import os
 import subprocess as sp
 import sys
-import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import magic
@@ -147,4 +146,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
