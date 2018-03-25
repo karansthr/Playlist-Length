@@ -74,7 +74,7 @@ def get_all_files(BASE_PATH, no_subdir):
     return with_subdir()
 
 
-def vidoe_len_calculator(BASE_PATH, no_subdir):
+def videos_len_calculator(BASE_PATH, no_subdir):
 
     if not os.path.isdir(BASE_PATH):
         return(
@@ -141,7 +141,7 @@ def main():
         action='store_true',
     )
     args = parser.parse_args()
-    print(vidoe_len_calculator(args.path, args.no_subdir))
+    print(videos_len_calculator(args.path, args.no_subdir))
 
 
 if __name__ == '__main__':
