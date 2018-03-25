@@ -3,6 +3,7 @@ import json
 import os
 import subprocess as sp
 import sys
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import magic
@@ -76,13 +77,13 @@ def get_all_files(BASE_PATH, no_subdir):
     return with_subdir()
 
 
-def main(BASE_PATH, no_subdir):
+def calculate_time(BASE_PATH, no_subdir):
     if not os.path.isdir(BASE_PATH):
         return(
             bold(red('\nError: This doesn\'t seem to be a valid directory.\n'))
         )
 
-    all_files = get_all_files(BASE_PATH, no_subdir)
+    all_files = list(get_all_files(BASE_PATH, no_subdir))
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
@@ -98,7 +99,7 @@ def main(BASE_PATH, no_subdir):
                 video_files.append(path)
 
     if not video_files:
-        return bold(red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n'))
+        return bold(red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n\n'))
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
@@ -123,7 +124,7 @@ def main(BASE_PATH, no_subdir):
     return '\n{}\n\n'.format(message)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='''
         Output the total duration of all the videos in given directory.
@@ -141,4 +142,9 @@ if __name__ == '__main__':
         action='store_true',
     )
     args = parser.parse_args()
-    sys.stdout.write(main(args.path, args.no_subdir))
+    sys.stdout.write(calculate_time(args.path, args.no_subdir))
+
+
+if __name__ == '__main__':
+    main()
+
