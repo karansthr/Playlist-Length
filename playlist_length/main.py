@@ -30,7 +30,7 @@ def probe(vid_file_path):
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
     out, error = pipe.communicate()
     if not error:
-        return json.loads(out)
+        return json.loads(out.decode('utf-8'))
 
 
 def duration(vid_file_path):
