@@ -2,7 +2,8 @@ import argparse
 import json
 import os
 import subprocess as sp
-from concurrent.futures import ProcessPoolExecutor
+import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import magic
 from huepy import bold, green, red
@@ -55,12 +56,21 @@ def is_video_file(file_path):
         return file_path
 
 
-def get_files(BASE_PATH):
-    for file in os.listdir(BASE_PATH):
-        file_path = os.path.join(BASE_PATH, file)
-        if os.path.isfile(file_path):
-            yield file_path
-
+def get_all_files(BASE_PATH, no_subdir):
+    def with_subdir():
+        for root, _, files in os.walk(BASE_PATH):
+            for file in files:
+                file_path = os.path.join(root, file)
+                if not os.path.islink(file_path):
+                    yield file_path
+    def without_subdir():
+        for file in os.listdir(BASE_PATH):
+            file_path = os.path.join(BASE_PATH, file)
+            if os.path.isfile(file_path) and not os.path.islink(file_path):
+                yield file_path
+    if no_subdir:
+        return without_subdir()
+    return with_subdir()
 
 def main(BASE_PATH, no_subdir):
     if not os.path.isdir(BASE_PATH):
@@ -68,31 +78,31 @@ def main(BASE_PATH, no_subdir):
             bold(red('\nError: This doesn\'t seem to be a valid directory.\n'))
         )
 
-    if no_subdir:
-        all_files = get_files(BASE_PATH)
-    else:
-        all_files = (
-            os.path.join(root, file)
-            for root, _, files in os.walk(BASE_PATH)
-            for file in files
-        )
+    all_files = get_all_files(BASE_PATH, no_subdir)
 
     with ProcessPoolExecutor() as executor:
-        video_files = list(
-            filter(None, executor.map(is_video_file, all_files))
-        )
+        sys.stdout.write('\n')
+        video_files = []
+        tasks = [
+            executor.submit(is_video_file, file_path) for file_path in all_files
+        ]
+        for task in tqdm(
+            as_completed(tasks), total=len(tasks), desc='Filtering videos'
+        ):
+            path = task.result()
+            if path is not None:
+                video_files.append(path)
 
     if not video_files:
         return bold(red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n'))
 
     with ProcessPoolExecutor() as executor:
-        print()
+        sys.stdout.write('\n')
         result = list(
             tqdm(
                 executor.map(duration, video_files),
                 total=len(video_files),
-                ascii=True,
-                desc='Please Wait',
+                desc='Calculating time',
             )
         )
 
@@ -106,7 +116,7 @@ def main(BASE_PATH, no_subdir):
             hours, minutes
         )
     message = bold(green(message))
-    return f'\n{message}\n'
+    return '\n{}\n\n'.format(message)
 
 
 if __name__ == '__main__':
@@ -127,4 +137,4 @@ if __name__ == '__main__':
         action='store_true',
     )
     args = parser.parse_args()
-    print(main(args.path, args.no_subdir))
+    sys.stdout.write(main(args.path, args.no_subdir))
