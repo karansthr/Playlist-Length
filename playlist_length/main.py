@@ -4,7 +4,6 @@ import os
 import subprocess as sp
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
-
 import magic
 from huepy import bold, green, red
 from tqdm import tqdm
@@ -52,7 +51,8 @@ def duration(vid_file_path):
 
 
 def is_video_file(file_path):
-    if 'video' in magic.from_file(file_path, mime=True).lower():
+    if not os.path.islink(file_path) and 'video' in magic.from_file(
+            file_path, mime=True).lower():
         return file_path
 
 
@@ -63,6 +63,7 @@ def get_all_files(BASE_PATH, no_subdir):
                 file_path = os.path.join(root, file)
                 if not os.path.islink(file_path):
                     yield file_path
+
     def without_subdir():
         for file in os.listdir(BASE_PATH):
             file_path = os.path.join(BASE_PATH, file)
@@ -72,13 +73,15 @@ def get_all_files(BASE_PATH, no_subdir):
         return without_subdir()
     return with_subdir()
 
-def main(BASE_PATH, no_subdir):
+
+def vidoe_len_calculator(BASE_PATH, no_subdir):
+
     if not os.path.isdir(BASE_PATH):
         return(
             bold(red('\nError: This doesn\'t seem to be a valid directory.\n'))
         )
 
-    all_files = get_all_files(BASE_PATH, no_subdir)
+    all_files = list(get_all_files(BASE_PATH, no_subdir))
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
@@ -86,6 +89,7 @@ def main(BASE_PATH, no_subdir):
         tasks = [
             executor.submit(is_video_file, file_path) for file_path in all_files
         ]
+
         for task in tqdm(
             as_completed(tasks), total=len(tasks), desc='Filtering videos'
         ):
@@ -119,7 +123,7 @@ def main(BASE_PATH, no_subdir):
     return '\n{}\n\n'.format(message)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='''
         Output the total duration of all the videos in given directory.
@@ -137,4 +141,8 @@ if __name__ == '__main__':
         action='store_true',
     )
     args = parser.parse_args()
-    sys.stdout.write(main(args.path, args.no_subdir))
+    print(vidoe_len_calculator(args.path, args.no_subdir))
+
+
+if __name__ == '__main__':
+    main()
