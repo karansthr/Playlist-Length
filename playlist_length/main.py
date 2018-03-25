@@ -57,20 +57,24 @@ def is_video_file(file_path):
 
 
 def get_all_files(BASE_PATH, no_subdir):
+
     def with_subdir():
         for root, _, files in os.walk(BASE_PATH):
             for file in files:
                 file_path = os.path.join(root, file)
                 if not os.path.islink(file_path):
                     yield file_path
+
     def without_subdir():
         for file in os.listdir(BASE_PATH):
             file_path = os.path.join(BASE_PATH, file)
             if os.path.isfile(file_path) and not os.path.islink(file_path):
                 yield file_path
+
     if no_subdir:
         return without_subdir()
     return with_subdir()
+
 
 def main(BASE_PATH, no_subdir):
     if not os.path.isdir(BASE_PATH):
