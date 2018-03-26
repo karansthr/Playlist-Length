@@ -6,6 +6,18 @@ A command-line tool to calculation the length of all the vidoes in a directory
 
 **ffmpeg** package is required for this package to work, so you need to get it installed on your system
 
+To install ffmpeg on ubuntu
+
+```
+sudo add-apt-repository ppa:mc3man/trusty-media
+sudo apt-get update
+sudo apt-get install ffmpeg
+sudo apt-get install frei0r-plugins
+```
+
+For other OS read instruction [here](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg)
+
+
 ## Installing
 hit up your terminal and type following command
 
@@ -30,7 +42,7 @@ or use following command for current directory
 $ playlistlen
 ```
 
-By default it will look for subdirectories in the given directory, if you want it to look for only files in the given directory only, then use **--no-subdir** flag, for example 
+By default it will look for subdirectories in the given directory, if you want it to look for only files in the given directory only, then use **--no-subdir** flag, for example
 ```
 $ playlistlen -p path_to_directory --no-subdir
 ```

@@ -51,8 +51,7 @@ def duration(vid_file_path):
 
 
 def is_video_file(file_path):
-    if not os.path.islink(file_path) and 'video' in magic.from_file(
-            file_path, mime=True).lower():
+    if 'video' in magic.from_file(file_path, mime=True).lower():
         return file_path
 
 
