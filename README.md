@@ -22,8 +22,14 @@ For other OS read instruction [here](https://github.com/adaptlearning/adapt_auth
 hit up your terminal and type following command
 
 ```
+$ pip install --user playlist-length
+```
+
+or
+```
 $ pip install --user -e git+https://github.com/karansthr/playlist-length#egg=playlist-length
 ```
+
 
 if your ~/.local/bin/ is not in PATH then run
 ```

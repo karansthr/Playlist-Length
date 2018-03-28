@@ -4,6 +4,7 @@ import os
 import subprocess as sp
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
 import magic
 from huepy import bold, green, red
 from tqdm import tqdm
