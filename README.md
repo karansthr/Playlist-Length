@@ -2,6 +2,8 @@
 
 A command-line tool to calculation the length of all the vidoes in a directory
 
+![playlistlen.gif](https://i.imgur.com/AhnzlZw.gif)
+
 ## Prerequisites
 
 **ffmpeg** package is required for this package to work, so you need to get it installed on your system
