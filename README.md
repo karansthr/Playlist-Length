@@ -1,6 +1,6 @@
 # Playlist Length
 
-A command-line tool to calculation the length of all the vidoes in a directory
+A command-line tool to calculate the length of all the vidoes in a directory
 
 ![playlistlen.gif](https://i.imgur.com/AhnzlZw.gif)
 
