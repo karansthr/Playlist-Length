@@ -49,6 +49,7 @@ def duration(vid_file_path):
             if 'duration' in s:
                 length = float(s['duration'])
                 break
+
     return length / 60
 
 
@@ -67,30 +68,24 @@ def get_all_files(BASE_PATH, no_subdir):
                     yield file_path
 
     def without_subdir():
-        return filter(
-            os.path.isfile, glob.glob(os.path.join(BASE_PATH, '*.*'))
-        )
+        return filter(os.path.isfile, glob.glob(os.path.join(BASE_PATH, '*.*')))
 
     if no_subdir:
         return without_subdir()
+
     return with_subdir()
 
 
 def video_len_calculator(BASE_PATH, no_subdir):
-
     if not os.path.isdir(BASE_PATH):
-        return(
-            bold(red('Error: This doesn\'t seem to be a valid directory'))
-        )
+        return bold(red('Error: This doesn\'t seem to be a valid directory.'))
 
     all_files = list(get_all_files(BASE_PATH, no_subdir))
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
         video_files = []
-        tasks = [
-            executor.submit(is_video_file, file_path) for file_path in all_files
-        ]
+        tasks = [executor.submit(is_video_file, file_path) for file_path in all_files]
 
         for task in tqdm(
             as_completed(tasks), total=len(tasks), desc='Filtering videos'
@@ -131,7 +126,8 @@ def main():
         '''
     )
     parser.add_argument(
-        '-p', '--path',
+        '-p',
+        '--path',
         help='Path to a directory. Defaults to current directory',
         type=str,
         default='.',
