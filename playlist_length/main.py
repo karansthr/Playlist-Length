@@ -1,9 +1,10 @@
 import argparse
+import glob
 import json
 import os
 import subprocess as sp
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import as_completed, ProcessPoolExecutor
 
 import magic
 from huepy import bold, green, red
@@ -57,28 +58,29 @@ def is_video_file(file_path):
 
 
 def get_all_files(BASE_PATH, no_subdir):
+
     def with_subdir():
         for root, _, files in os.walk(BASE_PATH):
             for file in files:
                 file_path = os.path.join(root, file)
-                if not os.path.islink(file_path):
+                if not os.path.islink(file_path) and not file.startswith('.'):
                     yield file_path
 
     def without_subdir():
-        for file in os.listdir(BASE_PATH):
-            file_path = os.path.join(BASE_PATH, file)
-            if os.path.isfile(file_path) and not os.path.islink(file_path):
-                yield file_path
+        return filter(
+            os.path.isfile, glob.glob(os.path.join(BASE_PATH, '*.*'))
+        )
+
     if no_subdir:
         return without_subdir()
     return with_subdir()
 
 
-def videos_len_calculator(BASE_PATH, no_subdir):
+def video_len_calculator(BASE_PATH, no_subdir):
 
     if not os.path.isdir(BASE_PATH):
         return(
-            bold(red('\nError: This doesn\'t seem to be a valid directory.\n'))
+            bold(red('Error: This doesn\'t seem to be a valid directory'))
         )
 
     all_files = list(get_all_files(BASE_PATH, no_subdir))
@@ -98,7 +100,7 @@ def videos_len_calculator(BASE_PATH, no_subdir):
                 video_files.append(path)
 
     if not video_files:
-        return bold(red('\nSeems like there is no video files. ¯\_(ツ)_/¯\n'))
+        return bold(red('Seems like there is no video files. ¯\_(ツ)_/¯'))
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
@@ -113,14 +115,13 @@ def videos_len_calculator(BASE_PATH, no_subdir):
     length = round(sum(result))
 
     if length < 60:
-        message = 'Length of all vidoes is {} minutes.'.format(length)
+        result = 'Length of all vidoes is {} minutes.'.format(length)
     else:
         hours, minutes = divmod(length, 60)
-        message = 'Length of all vidoes is {} hours and {} minutes.'.format(
+        result = 'Length of all videos is {} hours and {} minutes.'.format(
             hours, minutes
         )
-    message = bold(green(message))
-    return '\n{}\n\n'.format(message)
+    return bold(green(result))
 
 
 def main():
@@ -141,7 +142,8 @@ def main():
         action='store_true',
     )
     args = parser.parse_args()
-    print(videos_len_calculator(args.path, args.no_subdir))
+    result = video_len_calculator(args.path, args.no_subdir)
+    sys.stdout.write('\n{}\n\n'.format(result))
 
 
 if __name__ == '__main__':
