@@ -95,7 +95,7 @@ def video_len_calculator(BASE_PATH, no_subdir):
                 video_files.append(path)
 
     if not video_files:
-        return bold(red('Seems like there is no video files. ¯\_(ツ)_/¯'))
+        return bold(red('Seems like there is no video file. ¯\_(ツ)_/¯'))
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
