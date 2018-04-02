@@ -10,7 +10,7 @@ import magic
 from huepy import bold, green, red
 from tqdm import tqdm
 
-from __version__ import __version__
+from .__version__ import __version__
 
 
 def probe(vid_file_path):
