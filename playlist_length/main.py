@@ -10,6 +10,8 @@ import magic
 from huepy import bold, green, red
 from tqdm import tqdm
 
+from __version__ import __version__
+
 
 def probe(vid_file_path):
     '''
@@ -31,8 +33,8 @@ def probe(vid_file_path):
 
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
     out, error = pipe.communicate()
-    if not error:
-        return json.loads(out.decode('utf-8'))
+    result = {} if error else json.loads(out.decode('utf-8'))
+    return result
 
 
 def duration(vid_file_path):
@@ -119,7 +121,7 @@ def video_len_calculator(BASE_PATH, no_subdir):
     return bold(green(result))
 
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser(
         description='''
         Output the total duration of all the videos in given directory.
@@ -137,6 +139,17 @@ def main():
         help='Don\'t look for videos in sub directories.',
         action='store_true',
     )
+    parser.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version='%(prog)s {version}'.format(version=__version__)
+    )
+    return parser
+
+
+def main():
+    parser = get_parser()
     args = parser.parse_args()
     result = video_len_calculator(args.path, args.no_subdir)
     sys.stdout.write('\n{}\n\n'.format(result))
