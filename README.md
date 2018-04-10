@@ -40,9 +40,9 @@ $ export PATH=$PATH:${HOME}/.local/bin/
 
 you may add above line of code in ~/.zshrc or ~/.bashrc etc. to repeat above step every time a terminal is opened.
 
-To get length of all the videos in a directory, use following command
+To get length of all the videos in a directory, Give the path to directory as arguement
 ```
-$ playlistlen -p path_to_directory
+$ playlistlen path_to_directory
 ```
 
 or use following command for current directory
@@ -52,7 +52,7 @@ $ playlistlen
 
 By default it will look for vidoes in given directory and it's sub-directories recursively, if you want it to look in the given directory only, then use **--no-subdir** flag, for example
 ```
-$ playlistlen -p path_to_directory --no-subdir
+$ playlistlen path_to_directory --no-subdir
 ```
 
 for help use -h or --help, for example
