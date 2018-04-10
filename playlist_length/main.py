@@ -128,10 +128,10 @@ def get_parser():
         '''
     )
     parser.add_argument(
-        '-p',
-        '--path',
+        'path',
         help='Path to a directory. Defaults to current directory',
         type=str,
+        nargs='?',
         default='.',
     )
     parser.add_argument(
