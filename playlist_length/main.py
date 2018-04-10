@@ -56,8 +56,13 @@ def duration(vid_file_path):
 
 
 def is_video_file(file_path):
-    if 'video' in magic.from_file(file_path, mime=True).lower():
-        return file_path
+    try:
+        if 'video' in magic.from_file(file_path, mime=True).lower():
+            return file_path
+    except IOError:
+        # Probably this directory contains some file/folder that the
+        # user don't have permission to read.
+        pass
 
 
 def get_all_files(BASE_PATH, no_subdir):
