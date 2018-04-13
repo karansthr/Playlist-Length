@@ -33,7 +33,7 @@ def probe(vid_file_path):
 
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
     out, error = pipe.communicate()
-    result = {} if error else json.loads(out.decode('utf-8'))
+    result = None if error else json.loads(out.decode('utf-8'))
     return result
 
 
@@ -59,35 +59,36 @@ def is_video_file(file_path):
     try:
         if 'video' in magic.from_file(file_path, mime=True).lower():
             return file_path
+
     except IOError:
         # Probably this directory contains some file/folder that the
-        # user don't have permission to read.
+        # user don't have permission to read or maybe it is a symlinked
+        # file.
         pass
 
 
 def get_all_files(BASE_PATH, no_subdir):
 
     def with_subdir():
-        for root, _, files in os.walk(BASE_PATH):
-            for file in files:
-                file_path = os.path.join(root, file)
-                if not os.path.islink(file_path) and not file.startswith('.'):
-                    yield file_path
+        return (
+            os.path.join(root, file)
+            for root, _, files in os.walk(BASE_PATH)
+            for file in files
+            if file[0] != '.'
+        )
 
     def without_subdir():
         return filter(os.path.isfile, glob.glob(os.path.join(BASE_PATH, '*.*')))
 
-    if no_subdir:
-        return without_subdir()
-
-    return with_subdir()
+    all_files = without_subdir() if no_subdir else with_subdir()
+    return list(all_files)
 
 
 def video_len_calculator(BASE_PATH, no_subdir):
     if not os.path.isdir(BASE_PATH):
         return bold(red('Error: This doesn\'t seem to be a valid directory.'))
 
-    all_files = list(get_all_files(BASE_PATH, no_subdir))
+    all_files = get_all_files(BASE_PATH, no_subdir)
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
@@ -148,17 +149,19 @@ def get_parser():
         '-v',
         '--version',
         action='version',
-        version='%(prog)s {version}'.format(version=__version__)
+        version='%(prog)s {version}'.format(version=__version__),
     )
     return parser
 
 
 def main():
-    parser = get_parser()
-    args = parser.parse_args()
-    result = video_len_calculator(args.path, args.no_subdir)
-    sys.stdout.write('\n{}\n\n'.format(result))
-
-
-if __name__ == '__main__':
-    main()
+    try:
+        parser = get_parser()
+        args = parser.parse_args()
+        result = video_len_calculator(args.path, args.no_subdir)
+    except KeyboardInterrupt:
+        pass
+    else:
+        sys.stdout.write('\n{}\n\n'.format(result))
+    finally:
+        sys.exit()
