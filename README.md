@@ -52,7 +52,7 @@ or use following command for current directory
 $ playlistlen
 ```
 
-By default it will look for vidoes in given directory and it's sub-directories recursively, if you want it to look in the given directory only, then use **--no-subdir** flag, for example
+By default, it will look for videos in given directory and it's sub-directories recursively, if you want it to look in the given directory only, then use **--no-subdir** flag, for example:
 ```
 $ playlistlen path_to_directory --no-subdir
 ```
