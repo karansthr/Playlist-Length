@@ -4,7 +4,7 @@
 
 A command-line tool to calculate the length of all the vidoes in a directory
 
-![playlistlen.gif](https://i.imgur.com/5M2aaQw.gif)
+![playlistlen.gif](https://i.imgur.com/CelMYsk.gif)
 
 ## Prerequisites
 
