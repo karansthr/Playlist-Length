@@ -3,7 +3,7 @@
 [![Downloads](http://pepy.tech/badge/playlist-length)](http://pepy.tech/project/playlist-length)
 [![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](LICENSE)
 
-A command-line tool to calculate the length of all the vidoes in a directory
+A command-line tool to calculate the length of all the videos in a directory
 
 ![playlistlen.gif](https://i.imgur.com/CelMYsk.gif)
 
@@ -62,7 +62,7 @@ By default the the media-type it will look for is `video` but you can specify `a
 
 ```
 $ playlistlen path_to_directory --media-type audio
-$ playlistlen path_to_directory --media-type audio/video
+$ playlistlen path_to_directory --media-type both
 ```
 
 for help use -h or --help, for example

@@ -22,19 +22,11 @@ REGEX_MAP = {
 }
 
 
-def duration(vid_file_path):
-    '''
-    Give a json from ffprobe command line.
-
-    @vid_file_path : The absolute (full) path of the video file, string.
-    '''
-    command = [
-        "ffprobe",
-        "-show_entries",
-        "format=duration",
-        "-i",
-        vid_file_path
-    ]
+def duration(file_path):
+    """
+    Return the duration of the the file in minutes.
+    """
+    command = ["ffprobe", "-show_entries", "format=duration", "-i", file_path]
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
     out, error = pipe.communicate()
     match_object = None if error else DURATION_REGEX.search(out.decode('utf-8'))
@@ -107,7 +99,7 @@ def calculate_length(BASE_PATH, no_subdir, media_type):
     length = round(sum(result))
 
     if length < 60:
-        result = 'Length of all vidoes is {} minutes.'.format(length)
+        result = 'Length of all {} is {} minutes.'.format(media_type, length)
     else:
         hours, minutes = divmod(length, 60)
         result = 'Length of all {} is {} hours and {} minutes.'.format(
@@ -154,9 +146,9 @@ def main():
     try:
         parser = get_parser()
         args = parser.parse_args()
-        # why pass every time to `is_media_file` inject to globals intead ;)
         if args.media_type == 'both':
             args.media_type = 'audio/video'
+        # why pass every time to `is_media_file` inject to globals intead ;)
         globals()['media_type'] = REGEX_MAP[args.media_type]
         result = calculate_length(args.path, args.no_subdir, args.media_type)
     except KeyboardInterrupt:
