@@ -10,7 +10,7 @@ import magic
 from huepy import bold, green, red
 from tqdm import tqdm
 
-from __version__ import __version__
+from .__version__ import __version__
 
 
 DURATION_REGEX = re.compile(r'duration=(.*)')
@@ -119,7 +119,7 @@ def calculate_length(BASE_PATH, no_subdir, media_type):
 def get_parser():
     parser = argparse.ArgumentParser(
         description='''
-        Output the total duration of all the videos in given directory.
+        Output the total duration of all the audio and video files in the given directory.
         '''
     )
     parser.add_argument(
@@ -138,8 +138,7 @@ def get_parser():
         '--media-type',
         help='Type of media file to you want to check.',
         type=str,
-        choices=['audio', 'video', 'audio/video'],
-        nargs='?',
+        choices=['audio', 'video', 'both'],
         default='video',
     )
     parser.add_argument(
@@ -156,6 +155,8 @@ def main():
         parser = get_parser()
         args = parser.parse_args()
         # why pass every time to `is_media_file` inject to globals intead ;)
+        if args.media_type == 'both':
+            args.media_type = 'audio/video'
         globals()['media_type'] = REGEX_MAP[args.media_type]
         result = calculate_length(args.path, args.no_subdir, args.media_type)
     except KeyboardInterrupt:
@@ -164,6 +165,3 @@ def main():
         sys.stdout.write('\n{}\n\n'.format(result))
     finally:
         sys.exit()
-
-
-main()
