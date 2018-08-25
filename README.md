@@ -1,6 +1,7 @@
 # Playlist Length
 
 [![Downloads](http://pepy.tech/badge/playlist-length)](http://pepy.tech/project/playlist-length)
+[![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](LICENSE)
 
 A command-line tool to calculate the length of all the vidoes in a directory
 
