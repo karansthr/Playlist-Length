@@ -1,65 +1,54 @@
 import argparse
 import glob
-import json
 import os
 import subprocess as sp
 import sys
+import re
 from concurrent.futures import as_completed, ProcessPoolExecutor
 
 import magic
 from huepy import bold, green, red
 from tqdm import tqdm
 
-from .__version__ import __version__
+from __version__ import __version__
 
 
-def probe(vid_file_path):
+DURATION_REGEX = re.compile(r'duration=(.*)')
+
+REGEX_MAP = {
+    'video': re.compile(r'video|Video'),
+    'audio': re.compile(r'audio|Audio'),
+    'audio/video': re.compile(r'audio|video|Audio|Video'),
+}
+
+
+def duration(vid_file_path):
     '''
     Give a json from ffprobe command line.
 
     @vid_file_path : The absolute (full) path of the video file, string.
     '''
-
     command = [
-        'ffprobe',
-        '-loglevel',
-        'quiet',
-        '-print_format',
-        'json',
-        '-show_format',
-        '-show_streams',
-        vid_file_path,
+        "ffprobe",
+        "-show_entries",
+        "format=duration",
+        "-i",
+        vid_file_path
     ]
-
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
     out, error = pipe.communicate()
-    result = None if error else json.loads(out.decode('utf-8'))
-    return result
+    match_object = None if error else DURATION_REGEX.search(out.decode('utf-8'))
+    if match_object is None:
+        return 0
+    length = float(match_object.group(1)) / 60
+    return length
 
 
-def duration(vid_file_path):
-    ''' Video's duration in seconds, return a float number.'''
-    _json = probe(vid_file_path)
-    if not _json:
-        length = 0
-    elif 'format' in _json:
-        if 'duration' in _json['format']:
-            length = float(_json['format']['duration'])
-    elif 'streams' in _json:
-        # commonly stream 0 is the video
-        for s in _json['streams']:
-            if 'duration' in s:
-                length = float(s['duration'])
-                break
-
-    return length / 60
-
-
-def is_video_file(file_path):
+def is_media_file(file_path):
     try:
-        if 'video' in magic.from_file(file_path, mime=True).lower():
+        match_object = media_type.match(magic.from_file(file_path, mime=True))  # noqa
+        if match_object is not None:
             return file_path
-
     except IOError:
         # Probably this directory contains some file/folder that the
         # user don't have permission to read or maybe it is a symlinked
@@ -84,7 +73,7 @@ def get_all_files(BASE_PATH, no_subdir):
     return list(all_files)
 
 
-def video_len_calculator(BASE_PATH, no_subdir):
+def calculate_length(BASE_PATH, no_subdir, media_type):
     if not os.path.isdir(BASE_PATH):
         return bold(red('Error: This doesn\'t seem to be a valid directory.'))
 
@@ -93,17 +82,17 @@ def video_len_calculator(BASE_PATH, no_subdir):
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
         video_files = []
-        tasks = [executor.submit(is_video_file, file_path) for file_path in all_files]
+        tasks = [executor.submit(is_media_file, file_path) for file_path in all_files]
 
         for task in tqdm(
-            as_completed(tasks), total=len(tasks), desc='Filtering videos'
+            as_completed(tasks), total=len(tasks), desc='Filtering {}'.format(media_type)
         ):
             path = task.result()
             if path is not None:
                 video_files.append(path)
 
     if not video_files:
-        return bold(red('Seems like there is no video file. ¯\_(ツ)_/¯'))
+        return bold(red('Seems like there are no {} files. ¯\_(ツ)_/¯'.format(media_type)))
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
@@ -121,8 +110,8 @@ def video_len_calculator(BASE_PATH, no_subdir):
         result = 'Length of all vidoes is {} minutes.'.format(length)
     else:
         hours, minutes = divmod(length, 60)
-        result = 'Length of all videos is {} hours and {} minutes.'.format(
-            hours, minutes
+        result = 'Length of all {} is {} hours and {} minutes.'.format(
+            media_type, hours, minutes
         )
     return bold(green(result))
 
@@ -146,6 +135,14 @@ def get_parser():
         action='store_true',
     )
     parser.add_argument(
+        '--media-type',
+        help='Type of media file to you want to check.',
+        type=str,
+        choices=['audio', 'video', 'audio/video'],
+        nargs='?',
+        default='video',
+    )
+    parser.add_argument(
         '-v',
         '--version',
         action='version',
@@ -158,10 +155,15 @@ def main():
     try:
         parser = get_parser()
         args = parser.parse_args()
-        result = video_len_calculator(args.path, args.no_subdir)
+        # why pass every time to `is_media_file` inject to globals intead ;)
+        globals()['media_type'] = REGEX_MAP[args.media_type]
+        result = calculate_length(args.path, args.no_subdir, args.media_type)
     except KeyboardInterrupt:
         pass
     else:
         sys.stdout.write('\n{}\n\n'.format(result))
     finally:
         sys.exit()
+
+
+main()
