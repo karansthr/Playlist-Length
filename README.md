@@ -58,7 +58,7 @@ By default, it will look for videos in given directory and it's sub-directories 
 $ playlistlen path_to_directory --no-subdir
 ```
 
-By default the the media-type it will look for is `video` but you can specify `audio` or `both`
+By default the media-type it will look for is `video` but you can specify `audio` or `both`
 
 ```
 $ playlistlen path_to_directory --media-type audio
