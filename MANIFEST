@@ -3,4 +3,6 @@ README.md
 setup.cfg
 setup.py
 playlist_length/__init__.py
+playlist_length/__version__.py
 playlist_length/main.py
+playlist_length/utils.py

@@ -105,12 +105,12 @@ def calculate_length(BASE_PATH, no_subdir, media_type):
 
     if length < 60:
         minutes_string = pluralize(length, base='minute', suffix='s')
-        result = 'Length of all {} is {} minutes.'.format(media_type, minutes_string)
+        result = 'Length of all {} is {}.'.format(media_type, minutes_string)
     else:
         hours, minutes = divmod(length, 60)
         hours_string = pluralize(hours, base='hour', suffix='s')
         minutes_string = pluralize(minutes, base='minute', suffix='s')
-        result = 'Length of all {} is {} hours and {} minutes.'.format(
+        result = 'Length of all {} is {} and {}.'.format(
             media_type, hours_string, minutes_string
         )
     return bold(green(result))
