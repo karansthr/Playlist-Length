@@ -159,8 +159,8 @@ def main():
         # why pass every time to `is_media_file` inject to globals intead ;)
         globals()['media_type'] = REGEX_MAP[args.media_type]
         result = calculate_length(args.path, args.no_subdir, args.media_type)
-    except KeyboardInterrupt:
-        pass
+    except (KeyboardInterrupt, SystemExit):
+        sys.stdout.write('\nPlease Wait... Exiting Gracefully!\n')
     else:
         sys.stdout.write('\n{}\n\n'.format(result))
     finally:
