@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import glob
 import os
 import subprocess as sp
 import sys
@@ -12,6 +11,7 @@ import magic
 from huepy import bold, green, red
 from tqdm import tqdm
 
+from .utils import pluralize
 from .__version__ import __version__
 
 
@@ -61,7 +61,10 @@ def get_all_files(BASE_PATH, no_subdir):
         )
 
     def without_subdir():
-        return filter(os.path.isfile, glob.glob(os.path.join(BASE_PATH, '*.*')))
+        for file in os.listdir(BASE_PATH):
+            file_path = os.path.join(BASE_PATH, file)
+            if os.path.isfile(file_path) and not os.path.islink(file_path):
+                yield file_path
 
     all_files = without_subdir() if no_subdir else with_subdir()
     return list(all_files)
@@ -101,11 +104,14 @@ def calculate_length(BASE_PATH, no_subdir, media_type):
     length = round(sum(result))
 
     if length < 60:
-        result = 'Length of all {} is {} minutes.'.format(media_type, length)
+        minutes_string = pluralize(length, base='minute', suffix='s')
+        result = 'Length of all {} is {} minutes.'.format(media_type, minutes_string)
     else:
         hours, minutes = divmod(length, 60)
+        hours_string = pluralize(hours, base='hour', suffix='s')
+        minutes_string = pluralize(minutes, base='minute', suffix='s')
         result = 'Length of all {} is {} hours and {} minutes.'.format(
-            media_type, hours, minutes
+            media_type, hours_string, minutes_string
         )
     return bold(green(result))
 
