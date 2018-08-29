@@ -3,7 +3,7 @@
 [![Downloads](http://pepy.tech/badge/playlist-length)](http://pepy.tech/project/playlist-length)
 [![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](LICENSE)
 
-A command-line tool to calculate the length of all the videos in a directory
+A command-line tool to calculate the length of all the audios/videos in a directory
 
 ![playlistlen.gif](https://i.imgur.com/CelMYsk.gif)
 
