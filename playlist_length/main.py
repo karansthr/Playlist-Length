@@ -11,8 +11,8 @@ import magic
 from huepy import bold, green, red
 from tqdm import tqdm
 
-from .utils import pluralize
-from .__version__ import __version__
+from playlist_length.utils import pluralize
+from playlist_length.__version__ import __version__
 
 
 DURATION_REGEX = re.compile(r'duration=(.*)')
@@ -28,6 +28,8 @@ def duration(file_path):
     """
     Return the duration of the the file in minutes.
     """
+    if not is_media_file(file_path):
+        return 0
     command = ["ffprobe", "-show_entries", "format=duration", "-i", file_path]
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
     out, error = pipe.communicate()
@@ -67,7 +69,7 @@ def get_all_files(BASE_PATH, no_subdir):
                 yield file_path
 
     all_files = without_subdir() if no_subdir else with_subdir()
-    return list(all_files)
+    return tuple(all_files)
 
 
 def calculate_length(BASE_PATH, no_subdir, media_type):
@@ -78,32 +80,19 @@ def calculate_length(BASE_PATH, no_subdir, media_type):
 
     with ProcessPoolExecutor() as executor:
         sys.stdout.write('\n')
-        video_files = []
-        tasks = [executor.submit(is_media_file, file_path) for file_path in all_files]
-
-        for task in tqdm(
-            as_completed(tasks), total=len(tasks), desc='Filtering {}'.format(media_type)
-        ):
-            path = task.result()
-            if path is not None:
-                video_files.append(path)
-
-    if not video_files:
-        return bold(red('Seems like there are no {} files. ¯\_(ツ)_/¯'.format(media_type)))
-
-    with ProcessPoolExecutor() as executor:
-        sys.stdout.write('\n')
         result = list(
             tqdm(
-                executor.map(duration, video_files),
-                total=len(video_files),
-                desc='Calculating time',
+                executor.map(duration, all_files),
+                total=len(all_files),
+                desc='Processing files',
             )
         )
 
     length = round(sum(result))
 
-    if length < 60:
+    if length == 0:
+        return bold(red('Seems like there are no {} files. ¯\_(ツ)_/¯'.format(media_type)))
+    elif length < 60:
         minutes_string = pluralize(length, base='minute', suffix='s')
         result = 'Length of all {} is {}.'.format(media_type, minutes_string)
     else:
@@ -156,11 +145,10 @@ def main():
         args = parser.parse_args()
         if args.media_type == 'both':
             args.media_type = 'audio/video'
-        # why pass every time to `is_media_file` inject to globals intead ;)
         globals()['media_type'] = REGEX_MAP[args.media_type]
         result = calculate_length(args.path, args.no_subdir, args.media_type)
     except (KeyboardInterrupt, SystemExit):
-        sys.stdout.write('\nPlease Wait... Exiting Gracefully!\n')
+        sys.stdout.write('\nPlease wait... exiting gracefully!\n')
     else:
         sys.stdout.write('\n{}\n\n'.format(result))
     finally:
