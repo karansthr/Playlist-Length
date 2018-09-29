@@ -28,7 +28,7 @@ def duration(file_path):
     """
     Return the duration of the the file in minutes.
     """
-    if not is_media_file(file_path):
+    if is_media_file(file_path) is None:
         return 0
     command = ["ffprobe", "-show_entries", "format=duration", "-i", file_path]
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
