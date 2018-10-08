@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from playlist_length.utils import pluralize
 from playlist_length.__version__ import __version__
+from playlist_length.cache import find_or_add_cache
 
 
 DURATION_REGEX = re.compile(r'duration=(.*)')
@@ -23,9 +24,10 @@ REGEX_MAP = {
     'audio/video': re.compile(r'audio|video|Audio|Video'),
 }
 
-
 # Need to declare global varible for easier for read
 media_type = None
+
+enable_cache = False
 
 
 def duration(file_path):
@@ -81,18 +83,32 @@ def calculate_length(BASE_PATH, no_subdir, media_type):
         return bold(red('Error: This doesn\'t seem to be a valid directory.'))
 
     all_files = get_all_files(BASE_PATH, no_subdir)
+    sys.stdout.write('\n')
 
-    with ProcessPoolExecutor() as executor:
-        sys.stdout.write('\n')
-        result = list(
-            tqdm(
-                executor.map(duration, all_files),
-                total=len(all_files),
-                desc='Processing files',
-            )
-        )
+    def calc_length(all_files):
+        with ProcessPoolExecutor() as executor:
+            result = list(
+                tqdm(
+                    executor.map(duration, all_files),
+                    total=len(all_files),
+                    desc='Processing files',
+                ))
 
-    length = round(sum(result))
+        length = round(sum(result))
+        return length
+
+    if enable_cache:
+        length, c_hit = find_or_add_cache(all_files, calc_length)
+
+        if c_hit and length != 0:
+            for i in tqdm(
+                    range(len(all_files)),
+                    total=len(all_files),
+                    desc='Processing files'):
+                pass
+
+    else:
+        length = calc_length(all_files)
 
     if length == 0:
         return bold(red('Seems like there are no {} files. ¯\_(ツ)_/¯'.format(media_type)))
@@ -134,6 +150,7 @@ def get_parser():
         choices=['audio', 'video', 'both'],
         default='video',
     )
+    parser.add_argument('--cache', help='Enable cache', action='store_true')
     parser.add_argument(
         '-v',
         '--version',
@@ -145,11 +162,14 @@ def get_parser():
 
 def main():
     global media_type
+    global enable_cache
     try:
         parser = get_parser()
         args = parser.parse_args()
         if args.media_type == 'both':
             args.media_type = 'audio/video'
+
+        enable_cache = args.cache
         media_type = REGEX_MAP[args.media_type]
         result = calculate_length(args.path, args.no_subdir, args.media_type)
     except (KeyboardInterrupt, SystemExit):
