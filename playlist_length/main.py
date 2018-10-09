@@ -5,7 +5,7 @@ import os
 import subprocess as sp
 import sys
 import re
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed, ProcessPoolExecutor
 
 import magic
 from huepy import bold, green, red
@@ -22,10 +22,6 @@ REGEX_MAP = {
     'audio': re.compile(r'audio|Audio'),
     'audio/video': re.compile(r'audio|video|Audio|Video'),
 }
-
-
-# Need to declare global varible for easier for read
-media_type = None
 
 
 def duration(file_path):
@@ -144,13 +140,12 @@ def get_parser():
 
 
 def main():
-    global media_type
     try:
         parser = get_parser()
         args = parser.parse_args()
         if args.media_type == 'both':
             args.media_type = 'audio/video'
-        media_type = REGEX_MAP[args.media_type]
+        globals()['media_type'] = REGEX_MAP[args.media_type]
         result = calculate_length(args.path, args.no_subdir, args.media_type)
     except (KeyboardInterrupt, SystemExit):
         sys.stdout.write('\nPlease wait... exiting gracefully!\n')
