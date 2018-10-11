@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import multiprocessing
 import os
 import subprocess as sp
 import sys
 import re
-from concurrent.futures import as_completed, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
 import magic
 from huepy import bold, green, red
 from tqdm import tqdm
 
-from playlist_length.utils import pluralize
+from playlist_length.utils import pluralize, CacheUtil
 from playlist_length.__version__ import __version__
 
 
@@ -24,12 +25,30 @@ REGEX_MAP = {
 }
 
 
-def duration(file_path):
+def store_in_cache(queue, cache):
+    while True:
+        result = queue.get()
+        if result is None:
+            break
+        file_hash, value = result
+        cache.cache[file_hash] = value
+    cache.save()
+
+
+def duration(args):
     """
     Return the duration of the the file in minutes.
     """
+    file_path, queue, cache = args
+    file_name = os.path.basename(file_path)
+    file_hash = CacheUtil.get_hash(file_name)
+
+    if file_hash in cache:
+        return cache[file_hash]
+
     if is_media_file(file_path) is None:
         return 0
+
     command = ["ffprobe", "-show_entries", "format=duration", "-i", file_path]
     pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
     out, error = pipe.communicate()
@@ -37,6 +56,7 @@ def duration(file_path):
     if match_object is None:
         return 0
     length = float(match_object.group(1)) / 60
+    queue.put((file_hash, length))
     return length
 
 
@@ -72,23 +92,27 @@ def get_all_files(BASE_PATH, no_subdir):
     return tuple(all_files)
 
 
-def calculate_length(BASE_PATH, no_subdir, media_type):
+def calculate_length(BASE_PATH, no_subdir, media_type, queue, cache_ob):
     if not os.path.isdir(BASE_PATH):
         return bold(red('Error: This doesn\'t seem to be a valid directory.'))
 
     all_files = get_all_files(BASE_PATH, no_subdir)
-
-    with ProcessPoolExecutor() as executor:
+    max_workers = multiprocessing.cpu_count() + 1
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
         sys.stdout.write('\n')
+        cache = cache_ob.cache
+        args = ((file, queue, cache) for file in all_files)
         result = list(
             tqdm(
-                executor.map(duration, all_files),
+                executor.map(duration, args),
                 total=len(all_files),
                 desc='Processing files',
             )
         )
 
     length = round(sum(result))
+
+    queue.put(None)  # poison pill
 
     if length == 0:
         return bold(red('Seems like there are no {} files. ¯\_(ツ)_/¯'.format(media_type)))
@@ -146,7 +170,15 @@ def main():
         if args.media_type == 'both':
             args.media_type = 'audio/video'
         globals()['media_type'] = REGEX_MAP[args.media_type]
-        result = calculate_length(args.path, args.no_subdir, args.media_type)
+        cache_ob = CacheUtil(args.path)
+        manager = multiprocessing.Manager()
+        queue = manager.Queue()
+        result = calculate_length(
+            args.path, args.no_subdir, args.media_type, queue, cache_ob
+        )
+        consumer = multiprocessing.Process(target=store_in_cache, args=(queue, cache_ob))
+        consumer.start()
+        consumer.join()
     except (KeyboardInterrupt, SystemExit):
         sys.stdout.write('\nPlease wait... exiting gracefully!\n')
     else:
