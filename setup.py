@@ -13,7 +13,7 @@ requires = (
 setup(
     name='playlist-length',
     version=__version__,
-    description='A command-line tool to get length of all videos in a directory',
+    description='A command-line tool to get length of all audios/videos in a directory',
     long_description=open('README.md').read().strip(),
     long_description_content_type='text/markdown',
     author='Karan Suthar',
