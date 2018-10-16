@@ -175,11 +175,11 @@ def main():
         cache_ob = CacheUtil(args.path, args.media_type)
         manager = multiprocessing.Manager()
         queue = manager.Queue()
+        consumer = multiprocessing.Process(target=store_in_cache, args=(queue, cache_ob))
+        consumer.start()
         result = calculate_length(
             args.path, args.no_subdir, args.media_type, queue, cache_ob
         )
-        consumer = multiprocessing.Process(target=store_in_cache, args=(queue, cache_ob))
-        consumer.start()
         consumer.join()
     except (KeyboardInterrupt, SystemExit):
         sys.stdout.write('\nPlease wait... exiting gracefully!\n')
