@@ -46,16 +46,17 @@ def duration(args):
     if file_hash in cache:
         return cache[file_hash]
 
-    if is_media_file(file_path) is None:
-        return 0
-
-    command = ["ffprobe", "-show_entries", "format=duration", "-i", file_path]
-    pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
-    out, error = pipe.communicate()
-    match_object = None if error else DURATION_REGEX.search(out.decode('utf-8'))
-    if match_object is None:
-        return 0
-    length = float(match_object.group(1)) / 60
+    if not is_media_file(file_path):
+        length = 0
+    else:
+        command = ["ffprobe", "-show_entries", "format=duration", "-i", file_path]
+        pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
+        out, error = pipe.communicate()
+        match_object = None if error else DURATION_REGEX.search(out.decode('utf-8'))
+        if match_object is None:
+            length = 0
+        else:
+            length = float(match_object.group(1)) / 60
     queue.put((file_hash, length))
     return length
 
@@ -63,13 +64,14 @@ def duration(args):
 def is_media_file(file_path):
     try:
         match_object = media_type.match(magic.from_file(file_path, mime=True))  # noqa
-        if match_object is not None:
-            return file_path
     except IOError:
         # Probably this directory contains some file/folder that the
         # user don't have permission to read or maybe it is a symlinked
         # file.
-        pass
+        media_file = False
+    else:
+        media_file = bool(match_object)
+    return media_file
 
 
 def get_all_files(BASE_PATH, no_subdir):
@@ -170,7 +172,7 @@ def main():
         if args.media_type == 'both':
             args.media_type = 'audio/video'
         globals()['media_type'] = REGEX_MAP[args.media_type]
-        cache_ob = CacheUtil(args.path)
+        cache_ob = CacheUtil(args.path, args.media_type)
         manager = multiprocessing.Manager()
         queue = manager.Queue()
         result = calculate_length(
