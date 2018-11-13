@@ -16,8 +16,6 @@ from playlist_length.utils import pluralize, CacheUtil
 from playlist_length.__version__ import __version__
 
 
-DURATION_REGEX = re.compile(r'duration=(.*)')
-
 REGEX_MAP = {
     'video': re.compile(r'video|Video'),
     'audio': re.compile(r'audio|Audio'),
@@ -49,14 +47,20 @@ def duration(args):
     if not is_media_file(file_path):
         length = 0
     else:
-        command = ["ffprobe", "-show_entries", "format=duration", "-i", file_path]
+        command = [
+            'ffprobe',
+            '-loglevel',
+            'quiet',
+            '-show_entries',
+            'format=duration',
+            '-print_format',
+            'default=nokey=1:noprint_wrappers=1',
+            '-i',
+            file_path
+        ]
         pipe = sp.Popen(command, stdout=sp.PIPE, stderr=sp.STDOUT)
-        out, error = pipe.communicate()
-        match_object = None if error else DURATION_REGEX.search(out.decode('utf-8'))
-        if match_object is None:
-            length = 0
-        else:
-            length = float(match_object.group(1)) / 60
+        result, error = pipe.communicate()
+        length = 0 if not result else float(result) / 60
     queue.put((file_hash, length))
     return length
 
@@ -181,7 +185,7 @@ def main():
             args.path, args.no_subdir, args.media_type, queue, cache_ob
         )
         consumer.join()
-    except (KeyboardInterrupt, SystemExit):
+    except KeyboardInterrupt:
         sys.stdout.write('\nPlease wait... exiting gracefully!\n')
     else:
         sys.stdout.write('\n{}\n\n'.format(result))
